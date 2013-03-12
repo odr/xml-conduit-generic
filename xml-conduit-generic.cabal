@@ -1,0 +1,73 @@
+name:               xml-conduit-generic
+version:            0.1.0.0
+synopsis:           Transformation from ADT to xml and vice verse.
+description:        Provide classes and generic instances to convert from Haskell Algebraic Data Types to xml stream (conduit) and back
+license:            BSD3
+license-file:       LICENSE
+author:             Dmitry Olshansky
+maintainer:         OlshanskyDR@gmail.com
+category:           XML, Conduit, Generic
+cabal-version:      >= 1.8
+build-type:         Simple
+
+Flag with-test
+    Description:    Build with executable test
+    Default:        False
+
+library
+    exposed-modules:    Text.XML.Generic.ToXml
+                        Text.XML.Generic.FromXml
+                        Text.XML.Generic.ToXmlUtil
+                        Text.XML.Generic.FromXmlUtil
+
+    ghc-options:   -Wall -O2
+
+--    extensions: TemplateHaskell
+--                QuasiQuotes
+--                OverloadedStrings
+--                NoImplicitPrelude
+--                CPP
+--                MultiParamTypeClasses
+--                TypeFamilies
+--                GADTs
+--                GeneralizedNewtypeDeriving
+--                FlexibleContexts
+--                EmptyDataDecls
+--                NoMonomorphismRestriction
+
+    build-depends: base         >= 4        && < 5
+                , conduit       >= 1.0      && < 1.1
+                , xml-conduit   >= 1.1      && < 1.2
+                , safe          >= 0.3      && < 0.4
+                , ghc-prim
+                , xml-types     >= 0.3      && < 0.4
+                , text          >= 0.11     && < 0.12
+                , data-default  >= 0.5      && < 0.6
+                , transformers  >= 0.3      && < 0.4
+
+-- executable         testXml
+--     if flag(with-test)
+--         Buildable: True
+--     else
+--         Buildable: False
+-- 
+--     main-is:           testXml.hs
+--     hs-source-dirs:    test
+--     build-depends:     base
+--                      , xml-conduit-generic
+-- 
+--     ghc-options:       -O2
+
+-- test-suite test
+--     type:              exitcode-stdio-1.0
+--     main-is:           main.hs
+--     hs-source-dirs:    tests
+--     ghc-options:       -Wall
+-- 
+--     build-depends: base
+--                  , hsspd
+--                  , yesod-test >= 0.3 && < 0.4
+--                  , yesod-default
+--                  , yesod-core
+--                  , persistent
+--                  , persistent-postgresql
