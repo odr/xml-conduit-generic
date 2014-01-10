@@ -6,6 +6,7 @@ import Text.XML.Generic.ToXml
 import Text.XML.Generic.FromXml
 
 import Control.Monad
+import Control.Arrow (first)
 import Data.Conduit
 import Data.Maybe
 import qualified Data.Conduit.List as CL
@@ -19,7 +20,7 @@ import Data.Monoid
 
 main = tests xs
 
-data ForXml = forall a. (FromXml a, ToXml a, Eq a) => X { unX :: a }
+data ForXml = forall a. (FromXml a, ToXml a, Eq a, Show a) => X { unX :: a }
 
 data T0 = T0
     deriving (Eq, Show, Generic)
@@ -59,6 +60,7 @@ xs :: [(ForXml, T.Text)]
 -- xs  = [(X $ T4 5 $ Just $ T4 6 Nothing, "<T4 v4=\"5\"><n4 v4=\"6\"/></T4>")]
 xs  =   [ (X $ T0, "<T0/>")
         , (X $ T1 "", "<T1/>")
+        , (X $ T1 "x", "<T1>x</T1>")
         , (X $ T2 5, "<T2 val=\"5\"/>")
         , (X $ T32, "<T3><T32/></T3>")
         , (X $ T4 5 $ Just $ T4 6 Nothing, "<T4 v4=\"5\"><n4 v4=\"6\"/></T4>")
@@ -69,15 +71,25 @@ xs  =   [ (X $ T0, "<T0/>")
 tests xs = zipWithM (\n x -> test x >>= putStrLn . printf "Тест %i: %s" n . T.unpack) [(0::Int)..] xs
 
 test :: (ForXml, T.Text) -> IO T.Text
-test (X a, t) = fmap T.unwords $ sequence
-        [ return ""
-        , fmap (("\t1:" <>) . tst . (==Just t)) $ runToXml a
-        , fmap (("\t2:" <>) . tst . (==Right a)) 
-                $ runToXml a >>= maybe (return $ Left "err1") runFromXml
-        , fmap (("\t3:" <>) . tst . (==Right a)) $ runFromXml t
-        ]
-    where
-        tst True = " (+)"
-        tst False = " (-)" 
-
+test (X a, t) = fmap T.unwords vals
+  where
+    tst True = (" (+)", True)
+    tst False = (" (-)", False)
+    vals =  do
+        tox <- runToXml a
+        fromx <- runFromXml t
+        let b = fromx == Right a
+        vs <- sequence
+            [ return ("", True)
+            , return . first ("\t1:" <>) . tst . (==Just t) $ tox
+            , fmap (first ("\t2:" <>) . tst . (==Right a)) 
+                    $ maybe (return $ Left "err1") runFromXml tox
+            , return . first ("\t3:" <>) . tst . (==Right a) $ fromx
+            ]
+        
+        return $ map fst vs ++ if all snd vs then [] 
+            else [T.intercalate " : "   [ "val = " <> T.pack (show a)
+                                        , "toXml = " <> maybe "Nothing" id tox
+                                        , "xml = " <> t
+                                        , "fromXml = " <> T.pack (either ("Left " <>) show fromx) ]]
 

@@ -24,26 +24,30 @@ library
 
     extensions: OverloadedStrings, FlexibleInstances
 
-    build-depends: base         >= 4        && < 5
-                , conduit       >= 1.0      && < 1.1
-                , xml-conduit   >= 1.1      && < 1.2
-                , safe          >= 0.3      && < 0.4
-                , ghc-prim
-                , xml-types     >= 0.3      && < 0.4
-                , text          >= 0.11     && < 0.12
-                , data-default  >= 0.5      && < 0.6
-                , transformers  >= 0.3      && < 0.4
+    build-depends:      base         >= 4        && < 5
+                        , conduit       >= 1.0      && < 1.1
+                        , xml-conduit   >= 1.1      && < 1.2
+                        , safe          >= 0.3      && < 0.4
+                        , ghc-prim
+                        , xml-types     >= 0.3      && < 0.4
+                        , text          >= 0.11
+                        , data-default  >= 0.5      && < 0.6
+                        , transformers  >= 0.3      && < 0.4
 
--- executable         testXml
---     if flag(with-test)
---         Buildable: True
---     else
---         Buildable: False
--- 
---     main-is:           testXml.hs
---     hs-source-dirs:    test
---     build-depends:     base
---                      , xml-conduit-generic
--- 
---     ghc-options:       -O2
+executable         testXml
+    if flag(with-test)
+        Buildable: True
+    else
+        Buildable: False
+
+    main-is:            testXml.hs
+    hs-source-dirs:     test
+    build-depends:      base
+                        , xml-conduit-generic
+                        , data-default  >= 0.5      && < 0.6
+                        , xml-conduit   >= 1.1      && < 1.2
+                        , text          >= 0.11
+                        , conduit       >= 1.0.9
+
+    ghc-options:       -O2
 

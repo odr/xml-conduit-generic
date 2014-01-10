@@ -1,4 +1,4 @@
-{-# LANGUaGE RankNTypes, KindSignatures #-}
+{-# LANGUAGE RankNTypes, KindSignatures #-}
 -- |
 -- Module: Text.XML.Generic.ToXmlUtil
 -- Copyright: 2013 Dmitry Olshansky
@@ -21,6 +21,8 @@ import GHC.Generics
 data TOX = TOX  { toxTof :: TOF -- ^ functions to define name of attributes and elements
                 , toxTo :: TO   -- ^ current state of transformation
                 }
+instance Default TOX where
+    def = TOX def def
 
 -- | Current state of transformation.
 --   Generic transformation always started from Selector then Datatype then Sum is possible

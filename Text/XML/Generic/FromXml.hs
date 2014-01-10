@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleInstances, TypeOperators, DefaultSignatures, DeriveGeneric, FlexibleContexts, OverloadedStrings, OverlappingInstances #-}
+{-# LANGUAGE FlexibleInstances, TypeOperators, DefaultSignatures, DeriveGeneric, FlexibleContexts, OverloadedStrings, OverlappingInstances, RankNTypes #-}
 -- |
 -- Module: Text.XML.Generic.ToXml
 -- Copyright: 2013 Dmitry Olshansky
