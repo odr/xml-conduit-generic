@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleInstances, TypeOperators, DefaultSignatures, DeriveGeneric, FlexibleContexts, OverloadedStrings, OverlappingInstances, RankNTypes #-}
+{-# LANGUAGE FlexibleInstances, TypeOperators, DefaultSignatures, DeriveGeneric, FlexibleContexts, OverloadedStrings, RankNTypes  #-} --, OverlappingInstances#-}
 -- |
 -- Module: Text.XML.Generic.ToXml
 -- Copyright: 2013 Dmitry Olshansky
@@ -21,6 +21,7 @@ import Data.Conduit
 import qualified Data.Conduit.List as CL
 import Data.Default(Default(..))
 import qualified Data.Text as T
+import Data.Time
 import Data.XML.Types(Event(..), Content(..))
 import GHC.Generics
 import Safe
@@ -28,6 +29,7 @@ import Text.Printf(printf)
 import qualified Text.XML.Stream.Parse as XP
 import qualified Data.Map as M
 import qualified Data.Set as S
+import System.Locale(defaultTimeLocale)
 
 -- | Utility function to convert xml from text to Haskell-ADT 
 runFromXml :: (Monad m, MonadThrow m, Functor m, FromXml a) 
@@ -61,8 +63,10 @@ instance FromXml T.Text where
             Just (EventContent (ContentText t)) -> return t
             Just x -> leftoverOpt x >> return ""
 
+{-
 instance FromXml [Char] where
     fromXml = fmap (fmap T.unpack) . fromXml
+-}
 
 fromXmlReadF :: (Monad m, Functor m) => (String -> Maybe a) -> String -> FO 
                                      -> Consumer Event (Mon m) (Either String a)
@@ -100,6 +104,15 @@ instance FromXml Bool where
         readBool s  | s == "true"   = Just True
                     | s == "false"  = Just False
                     | otherwise     = Nothing 
+
+fromXmlReadTime :: (Monad m, Functor m, ParseTime t) => String -> FO -> Consumer Event (Mon m) (Either String t)
+fromXmlReadTime = fromXmlReadF (parseTime defaultTimeLocale "%FT%T")
+
+instance FromXml UTCTime where
+    fromXml =  fromXmlReadTime "UTCTime"
+
+instance FromXml LocalTime where
+    fromXml =  fromXmlReadTime "LocalTime"
 
 instance (FromXml a) => FromXml (Maybe a) where
     fromXml fo = do

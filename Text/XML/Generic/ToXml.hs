@@ -49,9 +49,11 @@ import qualified Data.Map as M
 import Data.Maybe -- (catMaybes, fromMaybe, isNothing, maybeToList)
 import qualified Data.Set as S
 import qualified Data.Text as T
+import Data.Time
 import Data.XML.Types(Event(..), Content(..), Name(..))
 import GHC.Generics
 import qualified Text.XML.Stream.Render as XR
+import System.Locale(defaultTimeLocale)
 
 showT :: (Show a) => a -> T.Text
 showT = T.pack . show
@@ -150,6 +152,27 @@ instance (ToXml a, Ord a) => ToXml (S.Set a) where
     asAttr t = asAttr t . S.toList
     attrs t = attrs t . S.toList
 
+toXmlTime :: (Monad m, FormatTime t, ParseTime t)  
+          => TOX -> Conduit t m Event
+toXmlTime   = mapInput  (T.pack . formatTime defaultTimeLocale "%FT%T") 
+                        (parseTime defaultTimeLocale "%FT%T" . T.unpack)
+            . toXml
+
+asAttrTime :: FormatTime t => TOX -> t -> Maybe (Name, [Content])
+asAttrTime t = asAttr t . T.pack . formatTime defaultTimeLocale "%FT%T"
+
+attrsTime  :: FormatTime t => TOX -> t -> [(Name, [Content])]
+attrsTime t = attrs t . T.pack . formatTime defaultTimeLocale "%FT%T"
+
+instance ToXml UTCTime where
+    toXml = toXmlTime
+    asAttr = asAttrTime
+    attrs = attrsTime
+
+instance ToXml LocalTime where
+    toXml = toXmlTime
+    asAttr = asAttrTime
+    attrs = attrsTime
 
 class GToXml f where
     gToXml      :: Monad m => TOX -> Conduit (f a) m Event
