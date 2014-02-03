@@ -13,6 +13,7 @@ module Text.XML.Generic.FromXml (FromXml(..), runFromXml, linearize) where -- , 
 import Text.XML.Generic.FromXmlUtil
 
 import Control.Applicative
+import Control.Arrow((&&&))
 import Control.Monad(liftM2)
 import Control.Monad.Trans.Class(lift)
 import Control.Monad.Trans.State
@@ -25,6 +26,8 @@ import GHC.Generics
 import Safe
 import Text.Printf(printf)
 import qualified Text.XML.Stream.Parse as XP
+import qualified Data.Map as M
+import qualified Data.Set as S
 
 -- | Utility function to convert xml from text to Haskell-ADT 
 runFromXml :: (Monad m, MonadThrow m, Functor m, FromXml a) 
@@ -61,10 +64,24 @@ instance FromXml T.Text where
 instance FromXml [Char] where
     fromXml = fmap (fmap T.unpack) . fromXml
 
+fromXmlReadF :: (Monad m, Functor m) => (String -> Maybe a) -> String -> FO 
+                                     -> Consumer Event (Mon m) (Either String a)
+fromXmlReadF f t fo = do
+    mt <- awaitOpt fo
+    case mt of
+        Nothing -> return $ Left $ err t $ show mt
+        Just x@(EventContent (ContentText txt)) -> case T.words txt of 
+            [] -> leftoverOpt x >> return (Left $ err t $ show mt) 
+            (z:[]) -> let s = T.unpack z in return $ maybe (Left $ err t s) Right $ f s 
+            (z:zs) -> do
+                let s = T.unpack z
+                leftoverOpt $ EventContent $ ContentText $ T.unwords zs  
+                return $ maybe (Left $ err t s) Right $ f s 
+        Just x -> leftoverOpt x >> return (Left $ err t $ show mt)
+
 fromXmlRead :: (Monad m, Functor m, Read a) => String -> FO -> Consumer Event (Mon m) (Either String a)
-fromXmlRead t = fmap (>>= \ts -> let s = T.unpack ts in maybe (Left $ err t s) Right $ readMay s) 
-                . fromXml
- 
+fromXmlRead = fromXmlReadF readMay 
+
 instance FromXml Integer where
     fromXml = fromXmlRead "Integer"
                 
@@ -78,11 +95,11 @@ instance FromXml Float where
     fromXml = fromXmlRead "Float"
 
 instance FromXml Bool where
-    fromXml = fmap (\es -> es >>= 
-                    \s -> if s == "true" then Right True 
-                          else if s == "false" then Right False 
-                          else Left $ err "Bool" $ T.unpack s) .
-                   fromXml
+    fromXml = fromXmlReadF readBool "Bool"
+      where
+        readBool s  | s == "true"   = Just True
+                    | s == "false"  = Just False
+                    | otherwise     = Nothing 
 
 instance (FromXml a) => FromXml (Maybe a) where
     fromXml fo = do
@@ -99,12 +116,25 @@ instance (FromXml a) => FromXml (Maybe a) where
 
 instance (FromXml a) => FromXml [a] where
     fromXml fo = go id
-        where
-            go front = do
-                ema <- fromXml fo
-                case ema of
-                    (Right (Just a))    -> go $ front . (a:)
-                    _                   -> return $ Right $ front []
+      where
+        go front = do
+            ema <- fromXml fo
+            case ema of
+                (Right (Just a))    -> go $ front . (a:)
+                _                   -> return $ Right $ front []
+
+data Pair a b = Pair { fstVal :: a, sndVal :: b } deriving Generic
+instance (FromXml a, FromXml b) => FromXml (Pair a b)
+
+instance (FromXml a, FromXml b) => FromXml (a,b) 
+  where
+    fromXml = fmap (fmap $ fstVal &&& sndVal) . fromXml
+
+instance (FromXml k, Ord k, FromXml v) => FromXml (M.Map k v) where
+    fromXml = fmap (fmap M.fromList) . fromXml 
+
+instance (FromXml a, Ord a) => FromXml (S.Set a) where
+    fromXml = fmap (fmap S.fromList) . fromXml 
 
 class GFromXml f where
     gFromXml :: (Monad m, Functor m) => FO -> Consumer Event (Mon m) (Either String (f a))

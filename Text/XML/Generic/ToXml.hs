@@ -45,7 +45,9 @@ import Data.Conduit
 import qualified Data.Conduit.List as CL
 import Data.Default(Default(..))
 import Data.List(intercalate)
+import qualified Data.Map as M
 import Data.Maybe -- (catMaybes, fromMaybe, isNothing, maybeToList)
+import qualified Data.Set as S
 import qualified Data.Text as T
 import Data.XML.Types(Event(..), Content(..), Name(..))
 import GHC.Generics
@@ -127,6 +129,26 @@ instance (ToXml a) => ToXml (Maybe a) where
     toXml tox   = CL.catMaybes =$= toXml tox
     asAttr t    = (>>= asAttr t)
     attrs t     = maybe [] $ attrs t
+
+data Pair a b = Pair { fstVal :: a, sndVal :: b } deriving Generic
+instance (ToXml a, ToXml b) => ToXml (Pair a b)
+
+
+instance (ToXml a, ToXml b) => ToXml (a,b) 
+  where
+    toXml = mapInput (uncurry Pair) (Just . (fstVal &&& sndVal)) . toXml
+    asAttr t = asAttr t . uncurry Pair
+    attrs t = attrs t . uncurry Pair
+
+instance (ToXml k, Ord k, ToXml v) => ToXml (M.Map k v) where
+    toXml = mapInput M.toList (Just . M.fromList) . toXml 
+    asAttr t = asAttr t . M.toList
+    attrs t = attrs t . M.toList
+
+instance (ToXml a, Ord a) => ToXml (S.Set a) where
+    toXml = mapInput S.toList (Just . S.fromList) . toXml 
+    asAttr t = asAttr t . S.toList
+    attrs t = attrs t . S.toList
 
 
 class GToXml f where
