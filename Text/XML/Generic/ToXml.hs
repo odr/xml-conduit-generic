@@ -58,12 +58,6 @@ import System.Locale(defaultTimeLocale)
 showT :: (Show a) => a -> T.Text
 showT = T.pack . show
 
-{-
-data A = A1 { aText :: T.Text, aInt :: Int } | A2 { aText :: T.Text } deriving Generic
-instance ToXml A
-data B = B { bText :: T.Text, bAs :: [A] } deriving Generic
-instance ToXml B
--}
 -- | Provide conduit to convert type to xml-events
 class ToXml a where 
     toXml       :: Monad m  
@@ -154,15 +148,15 @@ instance (ToXml a, Ord a) => ToXml (S.Set a) where
 
 toXmlTime :: (Monad m, FormatTime t, ParseTime t)  
           => TOX -> Conduit t m Event
-toXmlTime   = mapInput  (T.pack . formatTime defaultTimeLocale "%FT%T") 
-                        (parseTime defaultTimeLocale "%FT%T" . T.unpack)
+toXmlTime   = mapInput  (T.pack . formatTime defaultTimeLocale "%FT%T%Q") 
+                        (parseTime defaultTimeLocale "%FT%T%Q" . T.unpack)
             . toXml
 
 asAttrTime :: FormatTime t => TOX -> t -> Maybe (Name, [Content])
-asAttrTime t = asAttr t . T.pack . formatTime defaultTimeLocale "%FT%T"
+asAttrTime t = asAttr t . T.pack . formatTime defaultTimeLocale "%FT%T%Q"
 
 attrsTime  :: FormatTime t => TOX -> t -> [(Name, [Content])]
-attrsTime t = attrs t . T.pack . formatTime defaultTimeLocale "%FT%T"
+attrsTime t = attrs t . T.pack . formatTime defaultTimeLocale "%FT%T%Q"
 
 instance ToXml UTCTime where
     toXml = toXmlTime
@@ -242,4 +236,6 @@ instance (ToXml a) => GToXml (K1 i a) where
     gToXml tox = CL.map unK1 =$= toXml (toxNotRoot tox) 
     gAsAttr tox (K1 a) = asAttr (toxNotRoot tox) a
     gAttrs tox (K1 a) = maybeToList $ asAttr (toxNotRoot tox) a
+
+instance (ToXml a, ToXml b) => ToXml (Either a b)
 

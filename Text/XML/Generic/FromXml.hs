@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleInstances, TypeOperators, DefaultSignatures, DeriveGeneric, FlexibleContexts, OverloadedStrings, RankNTypes  #-} --, OverlappingInstances#-}
+{-# LANGUAGE FlexibleInstances, TypeOperators, DefaultSignatures, DeriveGeneric, FlexibleContexts, OverloadedStrings, RankNTypes, OverlappingInstances #-}
 -- |
 -- Module: Text.XML.Generic.ToXml
 -- Copyright: 2013 Dmitry Olshansky
@@ -8,7 +8,7 @@
 --
 -- Define class FromXml to transform xml to ADT. Generic instances could be used.
 --
-module Text.XML.Generic.FromXml (FromXml(..), runFromXml, linearize) where -- , runGFromXml) where
+module Text.XML.Generic.FromXml (FromXml(..), runFromXml, runFromXml', linearize) where -- , runGFromXml) where
 
 import Text.XML.Generic.FromXmlUtil
 
@@ -106,7 +106,7 @@ instance FromXml Bool where
                     | otherwise     = Nothing 
 
 fromXmlReadTime :: (Monad m, Functor m, ParseTime t) => String -> FO -> Consumer Event (Mon m) (Either String t)
-fromXmlReadTime = fromXmlReadF (parseTime defaultTimeLocale "%FT%T")
+fromXmlReadTime = fromXmlReadF (parseTime defaultTimeLocale "%FT%T%Q")
 
 instance FromXml UTCTime where
     fromXml =  fromXmlReadTime "UTCTime"
@@ -207,7 +207,6 @@ gFromXmlSel fo = doFrom fo getRes fmod $ foSel fo
 instance (GFromXml (K1 x a), Selector c) => GFromXml (M1 S c (K1 x a)) where
 -- selector (i.e. fieldName) 
     gFromXml = gFromXmlSel
-
 instance (Selector c, GFromXml (K1 R (Maybe a))) 
         => GFromXml (M1 S c (K1 R (Maybe a))) where
 -- selector (i.e. fieldName) 
@@ -224,6 +223,10 @@ instance (Selector c, GFromXml (K1 R (Maybe a)))
                     mapM_ leftover $ fsEvents s
                     lift $ put s { fsEvents = xs } 
         return $ Right mr
-
+{-
+-}
 instance (FromXml a) => GFromXml (K1 i a) where
     gFromXml fo = fmap (fmap K1) $ fromXml fo
+
+instance (FromXml a, FromXml b) => FromXml (Either a b)
+
