@@ -15,6 +15,7 @@ import Text.XML.Generic.FromXmlUtil
 import Control.Applicative
 import Control.Arrow((&&&))
 import Control.Monad(liftM2)
+import Control.Monad.Catch(MonadThrow)
 import Control.Monad.Trans.Class(lift)
 import Control.Monad.Trans.State
 import Data.Conduit
@@ -34,7 +35,7 @@ import System.Locale(defaultTimeLocale)
 -- | Utility function to convert xml from text to Haskell-ADT 
 runFromXml :: (Monad m, MonadThrow m, Functor m, FromXml a) 
             => T.Text -> m (Either String a)
-runFromXml t = CL.sourceList [t] $$ XP.parseText def =$ CL.map snd =$ runFromXml'
+runFromXml t = CL.sourceList [t] $$ XP.parseText' def =$ runFromXml'
 
 runFromXml' :: (Monad m, Functor m, FromXml a) => Sink Event m (Either String a)
 runFromXml' = linearize =$ transPipe (flip evalStateT def) (fromXml def)

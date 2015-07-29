@@ -1,0 +1,7 @@
+flags:
+  xml-conduit-generic:
+    with-test: false
+packages:
+- '.'
+extra-deps: []
+resolver: lts-2.19

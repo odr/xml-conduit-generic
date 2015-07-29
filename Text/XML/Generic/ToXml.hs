@@ -41,6 +41,9 @@ import Text.XML.Generic.ToXmlUtil
 
 import Control.Arrow
 import Control.Monad(when)
+import Control.Monad.Base(MonadBase)
+import Control.Monad.Catch(MonadThrow)
+import Control.Monad.Primitive(PrimMonad)
 import Data.Conduit
 import qualified Data.Conduit.List as CL
 import Data.Default(Default(..))
@@ -79,7 +82,8 @@ class ToXml a where
     attrs tox    = gAttrs tox . from
    
 -- | utitlity function to serialize single value to xml with default settings
-runToXml :: (Monad m, Functor m, ToXml a, MonadUnsafeIO m, MonadThrow m) => a -> m (Maybe T.Text)
+runToXml    :: (ToXml a, PrimMonad base, MonadBase base f, MonadThrow f) 
+            => a -> f (Maybe T.Text)
 runToXml a = fmap (listToMaybe) $ CL.sourceList [a] $$ toXml (TOX def def {toRoot = True}) =$ XR.renderText def =$ CL.consume 
 
 instance ToXml T.Text where
