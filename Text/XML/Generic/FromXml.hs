@@ -12,7 +12,6 @@ module Text.XML.Generic.FromXml (FromXml(..), runFromXml, runFromXml', linearize
 
 import Text.XML.Generic.FromXmlUtil
 
-import Control.Applicative
 import Control.Arrow((&&&))
 import Control.Monad(liftM2)
 import Control.Monad.Catch(MonadThrow)
@@ -30,7 +29,7 @@ import Text.Printf(printf)
 import qualified Text.XML.Stream.Parse as XP
 import qualified Data.Map as M
 import qualified Data.Set as S
-import System.Locale(defaultTimeLocale)
+-- import System.Locale(defaultTimeLocale)
 
 -- | Utility function to convert xml from text to Haskell-ADT 
 runFromXml :: (Monad m, MonadThrow m, Functor m, FromXml a) 
@@ -107,7 +106,7 @@ instance FromXml Bool where
                     | otherwise     = Nothing 
 
 fromXmlReadTime :: (Monad m, Functor m, ParseTime t) => String -> FO -> Consumer Event (Mon m) (Either String t)
-fromXmlReadTime = fromXmlReadF (parseTime defaultTimeLocale "%FT%T%Q")
+fromXmlReadTime = fromXmlReadF (parseTimeM True defaultTimeLocale "%FT%T%Q")
 
 instance FromXml UTCTime where
     fromXml =  fromXmlReadTime "UTCTime"

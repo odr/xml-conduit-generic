@@ -11,17 +11,16 @@
 module Text.XML.Generic.FromXmlUtil where
 
 import Control.Arrow
-import Control.Applicative
 import Control.Monad.Trans.Class(lift)
 import Control.Monad.Trans.State
 import Data.Conduit
 import qualified Data.Conduit.List as CL
 import Data.Default(Default(..))
-import Data.Monoid(Monoid(..), (<>))
 import qualified Data.Text as T
 import Data.XML.Types(Event(..), Content(..), Name(..))
 import GHC.Generics
 import Text.Printf(printf)
+import Data.Monoid ((<>))
 
 {-
 import Control.Monad(when)
@@ -42,8 +41,8 @@ data A
 
 -- | Two functions which are used in conversion process for attributes and elements.
 -- Type parameters are labels (S | D | C) and (E | A)
-data Checks s t = Checks    { chIs :: Monad m => Mon m Bool -- ^ should we try to convert attribute (or element) to Selector (or Datatype or Constructor)
-                            , chCheck :: Monad m => Mon m Bool  -- whether conversion successful, i.e. names are equivalent
+data Checks s t = Checks    { chIs :: forall m. Monad m => Mon m Bool -- ^ should we try to convert attribute (or element) to Selector (or Datatype or Constructor)
+                            , chCheck :: forall m. Monad m => Mon m Bool  -- whether conversion successful, i.e. names are equivalent
                             }
 
 -- | Checks for element and attribute 

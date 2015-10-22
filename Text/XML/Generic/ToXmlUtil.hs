@@ -9,7 +9,6 @@
 -- Parameters and some utility functions for ToXml 
 module Text.XML.Generic.ToXmlUtil where
 
-import Control.Applicative
 import Data.Conduit
 import Data.Default(Default(..))
 import Data.Maybe -- (catMaybes, fromMaybe, isNothing, maybeToList)

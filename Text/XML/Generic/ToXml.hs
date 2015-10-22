@@ -56,7 +56,7 @@ import Data.Time
 import Data.XML.Types(Event(..), Content(..), Name(..))
 import GHC.Generics
 import qualified Text.XML.Stream.Render as XR
-import System.Locale(defaultTimeLocale)
+-- import System.Locale(defaultTimeLocale)
 
 showT :: (Show a) => a -> T.Text
 showT = T.pack . show
@@ -153,7 +153,7 @@ instance (ToXml a, Ord a) => ToXml (S.Set a) where
 toXmlTime :: (Monad m, FormatTime t, ParseTime t)  
           => TOX -> Conduit t m Event
 toXmlTime   = mapInput  (T.pack . formatTime defaultTimeLocale "%FT%T%Q") 
-                        (parseTime defaultTimeLocale "%FT%T%Q" . T.unpack)
+                        (parseTimeM True defaultTimeLocale "%FT%T%Q" . T.unpack)
             . toXml
 
 asAttrTime :: FormatTime t => TOX -> t -> Maybe (Name, [Content])
